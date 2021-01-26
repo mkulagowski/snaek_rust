@@ -13,7 +13,7 @@ impl ResourceLoader {
     pub fn new(ctx: &mut Context) -> Self {
         Self {
             bg_image: Image::new(ctx, "/grass.png").unwrap(),
-            food_image: Image::new(ctx, "/tomato.png").unwrap(),
+            food_image: Image::new(ctx, "/ball.png").unwrap(),
             font: Font::new(ctx, "/Roboto-Black.ttf").unwrap(),
         }
     }
