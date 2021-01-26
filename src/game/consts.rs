@@ -1,4 +1,4 @@
-use crate::coords::Coords;
+use crate::game::coords::Coords;
 
 pub const GAME_ID: &str = "snaek_rust";
 pub const GAME_AUTHOR: &str = "mk.kulagowski";

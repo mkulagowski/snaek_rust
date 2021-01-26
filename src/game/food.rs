@@ -1,5 +1,5 @@
-use crate::consts;
-use crate::coords::Coords;
+use crate::game::consts;
+use crate::game::coords::Coords;
 use ggez::graphics::Rect;
 
 pub struct Food {

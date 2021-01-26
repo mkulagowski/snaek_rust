@@ -1,4 +1,4 @@
-use crate::{coords::Coords, direction::Direction};
+use crate::game::{coords::Coords, direction::Direction};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Turn {

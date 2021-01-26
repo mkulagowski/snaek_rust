@@ -1,9 +1,5 @@
-use crate::{
-    consts,
-    coords::Coords,
-    direction::Direction,
-    line::Line,
-    turn::{Turn, TurnType},
+use crate::game::{
+    consts, coords::Coords, direction::Direction, line::Line, turn::Turn, turn::TurnType,
 };
 use ggez::graphics::Rect;
 use std::collections::LinkedList;

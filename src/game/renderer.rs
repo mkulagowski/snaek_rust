@@ -1,5 +1,5 @@
-use crate::{consts, direction::Direction, food::Food, line::Line, turn::TurnType};
-use crate::{coords::Coords, LineSnake};
+use crate::game::{consts, direction::Direction, food::Food, line::Line, turn::TurnType};
+use crate::game::{coords::Coords, snake::LineSnake};
 use ggez::{
     graphics::{self, Color, FillOptions, Mesh, MeshBuilder, Text},
     Context,

@@ -3,7 +3,7 @@ use ggez::{
     Context,
 };
 
-use crate::{consts, coords::Coords, direction::Direction, turn::Turn};
+use crate::game::{consts, coords::Coords, direction::Direction, turn::Turn};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Line {

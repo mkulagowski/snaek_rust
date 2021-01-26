@@ -1,4 +1,4 @@
-use crate::coords::Coords;
+use crate::game::coords::Coords;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Direction {
