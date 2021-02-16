@@ -1,24 +1,22 @@
-use crate::game::{
-    consts, coords::Coords, direction::Direction, line::Line, turn::Turn, turn::TurnType,
-};
+use crate::game::{consts, coords::Coords, direction::Direction, line::Line, turn::Turn};
 use ggez::graphics::Rect;
 use std::collections::LinkedList;
 
-#[derive(Debug)]
+use super::segment::Segment;
+
 pub struct LineSnake {
-    pub body: LinkedList<Line>,
+    pub body: LinkedList<Box<dyn Segment>>,
     pub dir: Direction,
 }
 
 impl LineSnake {
     pub fn new(x: f32, y: f32) -> Self {
-        let mut body = LinkedList::new();
-        body.push_back(Line {
+        let mut body: LinkedList<Box<dyn Segment>> = LinkedList::new();
+        body.push_back(Box::new(Line {
             beg: Coords::new(x, y - consts::SNAKE_START_HEIGHT / 2.),
             end: Coords::new(x, y + consts::SNAKE_START_HEIGHT / 2.),
             dir: Direction::DOWN,
-            turn: None,
-        });
+        }));
 
         Self {
             body,
@@ -28,41 +26,46 @@ impl LineSnake {
 
     pub fn do_move(&mut self, dist: f32) {
         self.grow(dist);
+        self.shrink(dist);
+    }
+
+    fn shrink(&mut self, dist: f32) {
         let back = self.body.back_mut().unwrap();
-        let shrink_left = back.shrinkage_left(dist);
-        if shrink_left == 0.0 {
-            back.shrink(dist);
-        } else {
+        let shrink_left = back.shrink(dist);
+        if shrink_left > 0. {
             self.body.pop_back();
             self.body.back_mut().unwrap().shrink(shrink_left);
         }
     }
 
     pub fn grow(&mut self, dist: f32) {
-        let front = self.body.front().unwrap();
-        let front_dir = front.dir;
-        let dir = self.dir;
-        if dir != front_dir {
-            let mut new_coords = front.end.clone();
-            new_coords += front.dir.as_coords() * consts::SNAKE_HALF_WIDTH;
-            new_coords += dir.inverse().as_coords() * consts::SNAKE_HALF_WIDTH;
+        let mut front = self.body.front_mut().unwrap();
 
-            self.body.push_front(Line {
-                beg: new_coords,
-                end: new_coords,
-                dir: dir,
-                turn: Some(Turn::new(TurnType::from_dirs(&front_dir, &dir), new_coords)),
-            });
+        if front.get_dir() != self.dir {
+            let pos = front.get_end();
+            let in_dir = front.get_dir();
+            self.body
+                .push_front(Box::new(Turn::new(pos, in_dir, self.dir)));
+            front = self.body.front_mut().unwrap();
         }
-        self.body.front_mut().unwrap().grow(dist);
+
+        let growth_left = front.grow(dist);
+        if growth_left > 0. {
+            let pos = front.get_end();
+            let dir = front.get_dir();
+            self.body.push_front(Box::new(Line::new(pos, dir)));
+            self.body.front_mut().unwrap().grow(growth_left);
+        }
     }
 
     pub fn collide(&self, other: &Rect) -> bool {
-        self.body.front().unwrap().get_rekt().overlaps(other)
+        self.body
+            .iter()
+            .any(|segment| segment.get_bbox().overlaps(other))
     }
 
     pub fn wall_collide(&self) -> bool {
-        let head = self.body.front().unwrap().get_rekt();
+        let head = self.body.front().unwrap().get_bbox();
         head.left() < -consts::WALL_MARGIN
             || head.top() < -consts::WALL_MARGIN
             || head.bottom() > consts::SCREEN_SIZE.y + consts::WALL_MARGIN
@@ -70,11 +73,11 @@ impl LineSnake {
     }
 
     pub fn self_collide(&self) -> bool {
-        let head = self.body.front().unwrap();
+        let head = self.body.front().unwrap().get_bbox();
         self.body
             .iter()
             .skip(1)
-            .map(|x| x.get_rekt())
+            .map(|x| x.get_bbox())
             .any(|x| head.overlaps(&x))
     }
 }

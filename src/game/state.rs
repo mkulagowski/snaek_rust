@@ -28,10 +28,10 @@ pub struct GameData {
 }
 
 impl GameData {
-    pub fn new(ctx: &mut Context) -> GameData {
+    pub fn new(ctx: &mut Context) -> Self {
         graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
         let resources = ResourceLoader::new(ctx);
-        GameData {
+        Self {
             snake: LineSnake::new(consts::SCREEN_SIZE.x / 2.0, consts::SCREEN_SIZE.y / 2.0),
             delta_time: Instant::now(),
             food: Food::random(),
@@ -97,6 +97,7 @@ impl GameData {
 
     pub fn update_snake(&mut self, time_delta: f32) {
         if self.snake.collide(&self.food.bbox) {
+            self.state = GameState::PreGame;
             self.snake.grow(consts::FOOD_SIZE);
             self.inc_score();
             while self.snake.collide(&self.food.bbox) {
