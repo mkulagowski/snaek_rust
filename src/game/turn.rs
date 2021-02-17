@@ -3,6 +3,9 @@ use ggez::{
     Context,
 };
 
+#[cfg(feature = "debug")]
+use ggez::graphics::{Color, Mesh};
+
 use crate::game::{coords::Coords, direction::Direction};
 
 use super::{
@@ -73,42 +76,19 @@ impl Growable for Turn {
 impl Renderable for Turn {
     fn get_bbox(&self) -> Rect {
         let (x, y) = match self.in_dir {
-            Direction::UP => {
-                let mut x = self.pos.x - consts::SNAKE_HALF_WIDTH;
-                if self.out_dir == Direction::LEFT {
-                    x -= consts::TURN_MARGIN;
-                }
-                (x, self.pos.y - (consts::SNAKE_WIDTH + consts::TURN_MARGIN))
-            }
-            Direction::DOWN => {
-                let mut x = self.pos.x - consts::SNAKE_HALF_WIDTH;
-                if self.out_dir == Direction::LEFT {
-                    x -= consts::TURN_MARGIN;
-                }
-                (x, self.pos.y)
-            }
-            Direction::LEFT => {
-                let mut y = self.pos.y - consts::SNAKE_HALF_WIDTH;
-                if self.out_dir == Direction::UP {
-                    y -= consts::TURN_MARGIN;
-                }
-                (self.pos.x - (consts::SNAKE_WIDTH + consts::TURN_MARGIN), y)
-            }
-            Direction::RIGHT => {
-                let mut y = self.pos.y - consts::SNAKE_HALF_WIDTH;
-                if self.out_dir == Direction::UP {
-                    y -= consts::TURN_MARGIN;
-                }
-                (self.pos.x, y)
-            }
+            Direction::UP => (
+                self.pos.x - consts::SNAKE_HALF_WIDTH,
+                self.pos.y - (consts::SNAKE_WIDTH),
+            ),
+            Direction::DOWN => (self.pos.x - consts::SNAKE_HALF_WIDTH, self.pos.y),
+            Direction::LEFT => (
+                self.pos.x - (consts::SNAKE_WIDTH),
+                self.pos.y - consts::SNAKE_HALF_WIDTH,
+            ),
+            Direction::RIGHT => (self.pos.x, self.pos.y - consts::SNAKE_HALF_WIDTH),
         };
 
-        Rect::new(
-            x,
-            y,
-            consts::SNAKE_WIDTH + consts::TURN_MARGIN,
-            consts::SNAKE_WIDTH + consts::TURN_MARGIN,
-        )
+        Rect::new(x, y, consts::SNAKE_WIDTH, consts::SNAKE_WIDTH)
     }
 
     fn draw(&self, ctx: &mut Context) {

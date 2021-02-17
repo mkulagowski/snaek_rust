@@ -97,7 +97,6 @@ impl GameData {
 
     pub fn update_snake(&mut self, time_delta: f32) {
         if self.snake.collide(&self.food.bbox) {
-            self.state = GameState::PreGame;
             self.snake.grow(consts::FOOD_SIZE);
             self.inc_score();
             while self.snake.collide(&self.food.bbox) {

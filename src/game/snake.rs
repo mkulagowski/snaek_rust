@@ -59,9 +59,7 @@ impl LineSnake {
     }
 
     pub fn collide(&self, other: &Rect) -> bool {
-        self.body
-            .iter()
-            .any(|segment| segment.get_bbox().overlaps(other))
+        self.body.iter().any(|segment| segment.collision(other))
     }
 
     pub fn wall_collide(&self) -> bool {
@@ -73,11 +71,11 @@ impl LineSnake {
     }
 
     pub fn self_collide(&self) -> bool {
-        let head = self.body.front().unwrap().get_bbox();
+        let head = self.body.front().unwrap();
         self.body
             .iter()
             .skip(1)
             .map(|x| x.get_bbox())
-            .any(|x| head.overlaps(&x))
+            .any(|x| head.collision(&x))
     }
 }

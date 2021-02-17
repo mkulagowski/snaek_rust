@@ -23,7 +23,7 @@ impl Line {
     pub fn new(pos: Coords, dir: Direction) -> Self {
         Self {
             beg: pos,
-            end: pos,
+            end: pos + dir.as_coords() * 0.01,
             dir,
         }
     }
