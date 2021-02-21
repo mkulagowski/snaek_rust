@@ -9,8 +9,8 @@ use ggez::graphics::{Color, Mesh};
 use crate::game::{coords::Coords, direction::Direction};
 
 use super::{
-    consts, maths,
-    segment::{Growable, Renderable, Segment},
+    consts,
+    segment::{Growable, Renderable},
     Renderer,
 };
 
@@ -24,8 +24,6 @@ pub struct Turn {
     pub in_dir: Direction,
     pub out_dir: Direction,
 }
-
-impl Segment for Turn {}
 
 impl Turn {
     /// Create a new `Turn` that starts on the given `pos` with `in_dir`
@@ -44,42 +42,45 @@ impl Turn {
 
 impl Growable for Turn {
     fn grow(&mut self, dist: f32) -> f32 {
-        if self.is_growing && self.percentage < 1. {
-            let left = maths::clamp(
-                dist - (1. - self.percentage) * consts::SNAKE_WIDTH,
-                0.,
-                dist,
-            );
-            self.percentage = maths::clamp(self.percentage + dist / consts::SNAKE_WIDTH, 0., 1.);
-            self.is_growing = self.percentage < 1.;
-            return left;
+        if !self.is_growing || self.percentage >= 1. {
+            return dist;
         }
-        dist
+
+        let left = f32::clamp(
+            dist - (1. - self.percentage) * consts::SNAKE_WIDTH,
+            0.,
+            dist,
+        );
+        self.percentage = f32::clamp(self.percentage + dist / consts::SNAKE_WIDTH, 0., 1.);
+        self.is_growing = self.percentage < 1.;
+
+        left
     }
 
     fn shrink(&mut self, dist: f32) -> f32 {
-        if self.percentage > 0. {
-            let left = maths::clamp(dist - self.percentage * consts::SNAKE_WIDTH, 0., dist);
-            self.percentage = maths::clamp(self.percentage - dist / consts::SNAKE_WIDTH, 0., 1.);
-            return left;
+        if self.percentage <= 0. {
+            return dist;
         }
 
-        dist
+        let left = f32::clamp(dist - self.percentage * consts::SNAKE_WIDTH, 0., dist);
+        self.percentage = f32::clamp(self.percentage - dist / consts::SNAKE_WIDTH, 0., 1.);
+
+        left
     }
 
-    fn get_end(&self) -> Coords {
+    fn end(&self) -> Coords {
         self.pos
             + self.in_dir.as_coords() * consts::SNAKE_HALF_WIDTH
             + self.out_dir.as_coords() * consts::SNAKE_HALF_WIDTH
     }
 
-    fn get_dir(&self) -> Direction {
+    fn direction(&self) -> Direction {
         self.out_dir
     }
 }
 
 impl Renderable for Turn {
-    fn get_bbox(&self) -> Rect {
+    fn bounding_box(&self) -> Rect {
         let (x, y) = match self.in_dir {
             Direction::UP => (
                 self.pos.x - consts::SNAKE_HALF_WIDTH,
@@ -110,7 +111,7 @@ impl Renderable for Turn {
             + margin * consts::HALF_TURN_MARGIN;
         if let Ok(mesh) = Renderer::create_qt_ring(
             ctx,
-            &pos,
+            pos,
             consts::SNAKE_WIDTH + consts::TURN_MARGIN,
             consts::TURN_MARGIN,
             turn_type,

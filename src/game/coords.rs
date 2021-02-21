@@ -14,7 +14,7 @@ impl Coords {
     /// Construct a Coords struct with given coordinates
     ///
     pub fn new(x: f32, y: f32) -> Self {
-        Coords { x, y }
+        Self { x, y }
     }
 
     /// Construct a random Coords struct with both coordinates between min and max

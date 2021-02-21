@@ -4,7 +4,6 @@ mod coords;
 mod direction;
 mod food;
 mod line;
-mod maths;
 mod renderer;
 mod resourceloader;
 mod segment;

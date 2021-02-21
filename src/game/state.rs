@@ -4,6 +4,7 @@ use ggez::{
     graphics::{self, Font, Text, TextFragment},
     Context,
 };
+use itertools::Itertools;
 
 use crate::game::snake::LineSnake;
 use crate::game::{consts, direction::Direction, food::Food, resourceloader::ResourceLoader};
@@ -48,7 +49,7 @@ impl GameData {
             score_txt: Self::create_score_txt(0, resources.font),
             pregame_txt: Self::create_pregame_txt(resources.font),
             state: GameState::PreGame,
-            resources: resources,
+            resources,
         }
     }
 
@@ -91,19 +92,20 @@ impl GameData {
     ///
     pub fn update_input(&mut self, time_delta: f32) {
         self.input_timer += time_delta;
-        if self.input_timer >= consts::SECS_PER_INPUT_UPDATE {
-            if let Some((idx, &new_dir)) = self
-                .inputs
-                .iter()
-                .enumerate()
-                .find(|&(_, x)| x != &self.snake.dir.inverse() && x != &self.snake.dir)
-            {
-                self.snake.dir = new_dir;
-                self.inputs.drain(0..=idx);
-                self.input_timer = 0.0;
-            } else {
-                self.inputs.clear();
-            }
+        if self.input_timer < consts::SECS_PER_INPUT_UPDATE {
+            return;
+        }
+
+        if let Some((idx, &new_dir)) = self
+            .inputs
+            .iter()
+            .find_position(|&x| x != &self.snake.dir.inverse() && x != &self.snake.dir)
+        {
+            self.snake.dir = new_dir;
+            self.inputs.drain(0..=idx);
+            self.input_timer = 0.;
+        } else {
+            self.inputs.clear();
         }
     }
 
