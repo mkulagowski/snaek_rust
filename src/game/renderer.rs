@@ -1,10 +1,11 @@
 use crate::game::{consts, food::Food, turn::TurnType};
-use crate::game::{coords::Coords, snake::LineSnake};
+use crate::game::{coords::Coords, snake::Snake};
 use ggez::{
     graphics::{self, Color, FillOptions, Mesh, MeshBuilder, Text},
     Context, GameError,
 };
 use graphics::Image;
+use itertools as it;
 
 /// Helper struct for various drawing functions.
 /// It helps to draw each type of object in a proper manner.
@@ -69,7 +70,7 @@ impl Renderer {
 
     /// Draws whole `LineSnake` structure
     ///
-    pub fn draw_snake(ctx: &mut Context, snake: &LineSnake) {
+    pub fn draw_snake(ctx: &mut Context, snake: &Snake) {
         for segment in &snake.body {
             segment.draw(ctx);
         }
@@ -119,7 +120,7 @@ impl Renderer {
         let to_angle = to_angle.to_radians();
         let step = step.to_radians();
 
-        let arc_points = itertools::iterate(from_angle, |v| v + step)
+        let arc_points = it::iterate(from_angle, |v| v + step)
             .take_while(|&v| v <= to_angle)
             .map(|v| {
                 let (sin, cos) = v.sin_cos();
@@ -179,7 +180,7 @@ impl Renderer {
 
         let outers = Self::get_arc(pos, r1, from, to, 1.);
         let inners = Self::get_arc(pos, r2, from, to, 1.);
-        let polys = itertools::chain(outers, itertools::rev(inners)).collect();
+        let polys = it::chain(outers, it::rev(inners)).collect();
 
         if is_head {
             create_head(polys, ctx)

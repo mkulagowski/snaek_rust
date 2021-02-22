@@ -11,14 +11,13 @@ pub enum Direction {
 }
 
 impl Direction {
-    /// Return inverted direction.
+    /// Check if `self` and `other` are colinear,
+    /// i.e. if they are on the same axis (X/Y)
     ///
-    pub fn inverse(&self) -> Self {
+    pub fn is_colinear(&self, other: Self) -> bool {
         match self {
-            Direction::UP => Direction::DOWN,
-            Direction::DOWN => Direction::UP,
-            Direction::LEFT => Direction::RIGHT,
-            Direction::RIGHT => Direction::LEFT,
+            Self::UP | Self::DOWN => matches!(other, Self::UP | Self::DOWN),
+            Self::LEFT | Self::RIGHT => matches!(other, Self::LEFT | Self::RIGHT),
         }
     }
 

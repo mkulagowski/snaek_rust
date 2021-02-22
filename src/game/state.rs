@@ -4,9 +4,9 @@ use ggez::{
     graphics::{self, Font, Text, TextFragment},
     Context,
 };
-use itertools::Itertools;
+use itertools::{self as it, Itertools};
 
-use crate::game::snake::LineSnake;
+use crate::game::snake::Snake;
 use crate::game::{consts, direction::Direction, food::Food, resourceloader::ResourceLoader};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -19,7 +19,7 @@ pub enum GameState {
 /// and updating objects.
 ///
 pub struct GameData {
-    pub snake: LineSnake,
+    pub snake: Snake,
     pub food: Food,
     pub delta_time: std::time::Instant,
     pub inputs: VecDeque<Direction>,
@@ -40,7 +40,7 @@ impl GameData {
         graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
         let resources = ResourceLoader::new(ctx);
         Self {
-            snake: LineSnake::new(consts::SCREEN_SIZE.x / 2.0, consts::SCREEN_SIZE.y / 2.0),
+            snake: Snake::new(consts::SCREEN_SIZE.x / 2.0, consts::SCREEN_SIZE.y / 2.0),
             delta_time: Instant::now(),
             food: Food::random(),
             inputs: VecDeque::new(),
@@ -54,7 +54,7 @@ impl GameData {
     }
 
     fn reset(&mut self) {
-        self.snake = LineSnake::new(consts::SCREEN_SIZE.x / 2.0, consts::SCREEN_SIZE.y / 2.0);
+        self.snake = Snake::new(consts::SCREEN_SIZE.x / 2.0, consts::SCREEN_SIZE.y / 2.0);
         self.food = Food::random();
         while self.snake.collide(&self.food.bbox) {
             self.food = Food::random();
@@ -96,13 +96,13 @@ impl GameData {
             return;
         }
 
-        if let Some((idx, &new_dir)) = self
-            .inputs
-            .iter()
-            .find_position(|&x| x != &self.snake.dir.inverse() && x != &self.snake.dir)
+        if let Some((idx, &new_dir)) =
+            it::rev(&self.inputs).find_position(|dir| !dir.is_colinear(self.snake.dir))
         {
+            let truncated_len = self.inputs.len() - idx - 1;
+            self.inputs.truncate(truncated_len);
+
             self.snake.dir = new_dir;
-            self.inputs.drain(0..=idx);
             self.input_timer = 0.;
         } else {
             self.inputs.clear();

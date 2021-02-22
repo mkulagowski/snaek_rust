@@ -73,7 +73,7 @@ impl EventHandler for GameData {
             _ => None,
         } {
             if self.inputs.is_empty() || self.inputs.back().unwrap() != &dir {
-                self.inputs.push_back(dir);
+                self.inputs.push_front(dir);
             }
         } else if keycode == KeyCode::Space {
             if self.state == GameState::PreGame {
