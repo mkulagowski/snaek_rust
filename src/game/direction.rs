@@ -1,5 +1,7 @@
 use crate::game::coords::Coords;
 
+/// Enumeration for 4 main directions
+///
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Direction {
     UP,
@@ -9,6 +11,8 @@ pub enum Direction {
 }
 
 impl Direction {
+    /// Return inverted direction.
+    ///
     pub fn inverse(&self) -> Self {
         match self {
             Direction::UP => Direction::DOWN,
@@ -18,6 +22,8 @@ impl Direction {
         }
     }
 
+    /// Return direction as a 2d versor
+    ///
     pub fn as_coords(&self) -> Coords {
         let (x, y) = match self {
             Direction::UP => (0., -1.),

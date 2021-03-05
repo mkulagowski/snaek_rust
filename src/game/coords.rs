@@ -1,6 +1,9 @@
+//! Module with Coords struct
 use rand::distributions::{Distribution, Uniform};
 use std::ops::{Add, AddAssign, Mul, Sub};
 
+/// Structure for holding 2D coordinates
+///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Coords {
     pub x: f32,
@@ -8,10 +11,14 @@ pub struct Coords {
 }
 
 impl Coords {
+    /// Construct a Coords struct with given coordinates
+    ///
     pub fn new(x: f32, y: f32) -> Self {
         Coords { x, y }
     }
 
+    /// Construct a random Coords struct with both coordinates between min and max
+    ///
     pub fn random(min: f32, max: f32) -> Self {
         let mut rng = rand::thread_rng();
         let xrand = Uniform::from(min..max);

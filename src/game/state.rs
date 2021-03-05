@@ -14,6 +14,9 @@ pub enum GameState {
     Game,
 }
 
+/// Structure for holding game data, managing player input
+/// and updating objects.
+///
 pub struct GameData {
     pub snake: LineSnake,
     pub food: Food,
@@ -28,6 +31,10 @@ pub struct GameData {
 }
 
 impl GameData {
+    /// Creates new `GameData` instance. Loads game resources.
+    ///
+    /// Snake is created on the middle of the screen.
+    ///
     pub fn new(ctx: &mut Context) -> Self {
         graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
         let resources = ResourceLoader::new(ctx);
@@ -77,6 +84,11 @@ impl GameData {
         )
     }
 
+    /// Processes user input, capped to `consts::SECS_PER_INPUT_UPDATE`.
+    ///
+    /// The cap is there to make sure that 180 turns always makes enough
+    /// space between both parts of the snake.
+    ///
     pub fn update_input(&mut self, time_delta: f32) {
         self.input_timer += time_delta;
         if self.input_timer >= consts::SECS_PER_INPUT_UPDATE {
@@ -95,6 +107,9 @@ impl GameData {
         }
     }
 
+    /// Updates snake (collision, movement, growth)
+    /// Upon collision with anything (self, wall, food) takes proper action.
+    ///
     pub fn update_snake(&mut self, time_delta: f32) {
         if self.snake.collide(&self.food.bbox) {
             self.snake.grow(consts::FOOD_SIZE);

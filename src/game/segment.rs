@@ -2,12 +2,17 @@ use ggez::{graphics::Rect, Context};
 
 use super::{consts, coords::Coords, direction::Direction, maths};
 
+/// Trait for growth functionality of the snake segments
+///
 pub trait Growable {
     fn grow(&mut self, dist: f32) -> f32;
     fn shrink(&mut self, dist: f32) -> f32;
     fn get_end(&self) -> Coords;
     fn get_dir(&self) -> Direction;
 }
+
+/// Trait for rendering and collision functionality of the snake segments
+///
 pub trait Renderable {
     fn draw(&self, ctx: &mut Context);
     fn get_bbox(&self) -> Rect;

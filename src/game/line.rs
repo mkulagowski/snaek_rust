@@ -10,6 +10,8 @@ use super::{
     segment::{Growable, Renderable, Segment},
 };
 
+/// Straight segment of a snake
+///
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Line {
     pub beg: Coords,
@@ -20,6 +22,9 @@ pub struct Line {
 impl Segment for Line {}
 
 impl Line {
+    /// Create a new `Line` that starts on the given `pos`
+    /// and is aligned in the given direction. Initial length is 0.01.
+    ///
     pub fn new(pos: Coords, dir: Direction) -> Self {
         Self {
             beg: pos,
@@ -28,6 +33,8 @@ impl Line {
         }
     }
 
+    /// Return current length
+    ///
     pub fn size(&self) -> f32 {
         match self.dir {
             Direction::UP | Direction::DOWN => (self.end.y - self.beg.y).abs(),

@@ -14,6 +14,8 @@ use super::{
     Renderer,
 };
 
+/// Curved segment of a snake, 0-90 degrees of a ring.
+///
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Turn {
     pub percentage: f32,
@@ -26,6 +28,9 @@ pub struct Turn {
 impl Segment for Turn {}
 
 impl Turn {
+    /// Create a new `Turn` that starts on the given `pos` with `in_dir`
+    /// and turns towards `out_dir`.
+    ///
     pub fn new(pos: Coords, in_dir: Direction, out_dir: Direction) -> Self {
         Self {
             percentage: 0.,
@@ -103,7 +108,7 @@ impl Renderable for Turn {
         let pos = self.pos
             + self.in_dir.as_coords() * consts::SNAKE_HALF_WIDTH
             + margin * consts::HALF_TURN_MARGIN;
-        if let Some(mesh) = Renderer::create_qt_ring(
+        if let Ok(mesh) = Renderer::create_qt_ring(
             ctx,
             &pos,
             consts::SNAKE_WIDTH + consts::TURN_MARGIN,
@@ -132,6 +137,8 @@ impl Renderable for Turn {
     }
 }
 
+/// Enum that describes a Turn as one of the quaters of the circle
+///
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum TurnType {
     UpRight,
@@ -141,21 +148,23 @@ pub enum TurnType {
 }
 
 impl TurnType {
-    pub fn from_dirs(d1: &Direction, d2: &Direction) -> Self {
-        if (d1 == &Direction::LEFT && d2 == &Direction::UP)
-            || (d1 == &Direction::DOWN && d2 == &Direction::RIGHT)
+    /// Create `TurnType` based on the Turn directions
+    ///
+    pub fn from_dirs(in_dir: &Direction, out_dir: &Direction) -> Self {
+        if (in_dir == &Direction::LEFT && out_dir == &Direction::UP)
+            || (in_dir == &Direction::DOWN && out_dir == &Direction::RIGHT)
         {
             TurnType::DownRight
-        } else if (d1 == &Direction::DOWN && d2 == &Direction::LEFT)
-            || (d1 == &Direction::RIGHT && d2 == &Direction::UP)
+        } else if (in_dir == &Direction::DOWN && out_dir == &Direction::LEFT)
+            || (in_dir == &Direction::RIGHT && out_dir == &Direction::UP)
         {
             TurnType::DownLeft
-        } else if (d1 == &Direction::RIGHT && d2 == &Direction::DOWN)
-            || (d1 == &Direction::UP && d2 == &Direction::LEFT)
+        } else if (in_dir == &Direction::RIGHT && out_dir == &Direction::DOWN)
+            || (in_dir == &Direction::UP && out_dir == &Direction::LEFT)
         {
             TurnType::UpLeft
-        } else if (d1 == &Direction::UP && d2 == &Direction::RIGHT)
-            || (d1 == &Direction::LEFT && d2 == &Direction::DOWN)
+        } else if (in_dir == &Direction::UP && out_dir == &Direction::RIGHT)
+            || (in_dir == &Direction::LEFT && out_dir == &Direction::DOWN)
         {
             TurnType::UpRight
         } else {
@@ -163,6 +172,8 @@ impl TurnType {
         }
     }
 
+    /// Convert `TurnType` into pair of start->end angles.
+    ///
     pub fn get_arc_bounds(self) -> (f32, f32) {
         let from = match self {
             TurnType::DownLeft => 0.,
@@ -175,6 +186,8 @@ impl TurnType {
     }
 }
 
+/// Get translation for each quater of the circle
+///
 pub fn _get_arc_translation(quarter: TurnType) -> Coords {
     match quarter {
         TurnType::DownRight => Coords::new(0.5, -0.5),

@@ -1,3 +1,4 @@
+//! Module that gathers all more or less modifiable parameters
 use crate::game::coords::Coords;
 
 pub const GAME_ID: &str = "snaek_rust";

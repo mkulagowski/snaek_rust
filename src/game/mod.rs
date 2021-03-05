@@ -26,7 +26,8 @@ use self::{coords::Coords, direction::Direction, renderer::Renderer};
 
 impl EventHandler for GameData {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        let time_delta = (Instant::now() - self.delta_time).as_secs_f32();
+        let prev_time = std::mem::replace(&mut self.delta_time, Instant::now());
+        let time_delta = self.delta_time.duration_since(prev_time).as_secs_f32();
 
         match self.state {
             GameState::PreGame => {}
@@ -35,8 +36,6 @@ impl EventHandler for GameData {
                 self.update_snake(time_delta);
             }
         }
-
-        self.delta_time = Instant::now();
         Ok(())
     }
 

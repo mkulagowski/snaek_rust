@@ -4,12 +4,18 @@ use std::collections::LinkedList;
 
 use super::segment::Segment;
 
-pub struct LineSnake {
+/// Snake structure that consists of a list of either
+/// straight or curved segments and the direction of the head.
+///
+pub struct Snake {
     pub body: LinkedList<Box<dyn Segment>>,
     pub dir: Direction,
 }
 
-impl LineSnake {
+impl Snake {
+    /// Create new `Snake` of the default length
+    /// on the `(x, y)` position, pointing down.
+    ///
     pub fn new(x: f32, y: f32) -> Self {
         let mut body: LinkedList<Box<dyn Segment>> = LinkedList::new();
         body.push_back(Box::new(Line {
@@ -24,6 +30,8 @@ impl LineSnake {
         }
     }
 
+    /// Move `Snake` in the current direction by a given distance.
+    ///
     pub fn do_move(&mut self, dist: f32) {
         self.grow(dist);
         self.shrink(dist);
@@ -38,6 +46,10 @@ impl LineSnake {
         }
     }
 
+    /// Extend `Snake` towards the current direction by a given distance.
+    /// When `Snake` direction changes, add a new Turn at the begining.
+    /// When Turn at the begining is fully extended, add a new Line at the begining.
+    ///
     pub fn grow(&mut self, dist: f32) {
         let mut front = self.body.front_mut().unwrap();
 
@@ -58,10 +70,14 @@ impl LineSnake {
         }
     }
 
+    /// Check if any of the segments collides with given `Rect`.
+    ///
     pub fn collide(&self, other: &Rect) -> bool {
         self.body.iter().any(|segment| segment.collision(other))
     }
 
+    /// Check if head is colliding with screen boundaries.
+    ///
     pub fn wall_collide(&self) -> bool {
         let head = self.body.front().unwrap().get_bbox();
         head.left() < -consts::WALL_MARGIN
@@ -70,6 +86,8 @@ impl LineSnake {
             || head.right() > consts::SCREEN_SIZE.x + consts::WALL_MARGIN
     }
 
+    /// Check if head is colliding with any other segment.
+    ///
     pub fn self_collide(&self) -> bool {
         let head = self.body.front().unwrap();
         self.body

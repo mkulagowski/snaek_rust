@@ -2,13 +2,18 @@ use crate::game::{consts, food::Food, turn::TurnType};
 use crate::game::{coords::Coords, snake::LineSnake};
 use ggez::{
     graphics::{self, Color, FillOptions, Mesh, MeshBuilder, Text},
-    Context,
+    Context, GameError,
 };
 use graphics::Image;
 
+/// Helper struct for various drawing functions.
+/// It helps to draw each type of object in a proper manner.
 pub struct Renderer {}
 
 impl Renderer {
+    /// Draws a tiled background. Given image is scaled down to 50%
+    /// and tiled as needed, depending on the screen size.
+    ///
     pub fn draw_bg(ctx: &mut Context, img: &Image) {
         let scale = 0.5;
         let (x_step, y_step) = {
@@ -34,6 +39,8 @@ impl Renderer {
             });
     }
 
+    /// Draws a sprite on the position from the `Food` instance
+    ///
     pub fn draw_food(ctx: &mut Context, food: &Food, img: &Image) {
         let scalex = consts::FOOD_SIZE / img.dimensions().w;
         let scaley = consts::FOOD_SIZE / img.dimensions().h;
@@ -60,10 +67,20 @@ impl Renderer {
         }
     }
 
+    /// Draws whole `LineSnake` structure
+    ///
     pub fn draw_snake(ctx: &mut Context, snake: &LineSnake) {
         snake.body.iter().for_each(|x| x.draw(ctx));
     }
 
+    /// Draws given text in a white color with a black outline
+    ///
+    /// # Parameters
+    ///
+    /// - `ctx`: game context
+    /// - `txt`: the text itself
+    /// - `pos`: position of the top left corner of the text
+    ///
     pub fn draw_text_with_outline(ctx: &mut Context, txt: &Text, pos: Coords) {
         const WIDTH: f32 = 2.;
         [-WIDTH, 0., WIDTH].iter().for_each(|x| {
@@ -82,6 +99,14 @@ impl Renderer {
         graphics::draw(ctx, txt, params.color(graphics::WHITE)).expect("Error while drawing score");
     }
 
+    /// Draws given text in a black color
+    ///
+    /// # Parameters
+    ///
+    /// - `ctx`: game context
+    /// - `txt`: the text itself
+    /// - `pos`: position of the top left corner of the text
+    ///
     pub fn _draw_text(ctx: &mut Context, txt: &Text, pos: Coords) {
         let params = graphics::DrawParam::default().dest(pos);
         graphics::draw(ctx, txt, params.color(graphics::BLACK)).expect("Error while drawing score");
@@ -102,6 +127,27 @@ impl Renderer {
         points
     }
 
+    /// Creates mesh of a quater of the ring.
+    /// How much part is drawn and the starting edge can be chosen via params.
+    ///
+    /// # Parameters
+    ///
+    /// - `ctx`: game context
+    /// - `pos`: position where middle of the mesh should be
+    /// - `r1`: radius of the outer edge of the ring, must be > 0
+    /// - `r2`: radius of the inner edge of the ring, must be >= 0
+    /// - `turn`: determines which quater is created
+    /// - `progress`: how much of a quater should be created, between 0 and 1
+    /// - `reversed`: determines from which end the progress is
+    /// - `is_head`: whether the segment drawn is a head and we want to draw eyes
+    ///
+    /// # Returns
+    ///
+    /// A `Result` which is:
+    ///
+    /// - `Ok`: A `Mesh` that is ready to be drawn
+    /// - `Err`: Something went wrong I guess...or You gave a negative radius
+    ///
     pub fn create_qt_ring(
         ctx: &mut Context,
         pos: &Coords,
@@ -111,7 +157,12 @@ impl Renderer {
         progress: f32,
         reversed: bool,
         is_head: bool,
-    ) -> Option<Mesh> {
+    ) -> Result<Mesh, GameError> {
+        if r1 <= 0. || r2 < 0. {
+            return Result::Err(GameError::ConfigError(
+                "Radiuses cannot be negative!".to_string(),
+            ));
+        }
         let (from, to) = turn.get_arc_bounds();
         let pos = pos.to_owned() + r1 * Self::get_arc_translation(turn);
 
@@ -124,7 +175,7 @@ impl Renderer {
         let outers = Self::get_arc(pos, r1, from, to, 1.);
         let inners = Self::get_arc(pos, r2, from, to, 1.);
         let polys: Vec<Coords> = outers.into_iter().chain(inners.into_iter().rev()).collect();
-        let result_mesh = if is_head {
+        if is_head {
             let pt1 = polys.first().unwrap();
             let pt2 = polys.last().unwrap();
 
@@ -166,12 +217,7 @@ impl Renderer {
                 )
                 .unwrap()
                 .build(ctx)
-        };
-
-        if let Ok(mesh) = result_mesh {
-            return Some(mesh);
         }
-        None
     }
 
     fn get_arc_translation(quarter: TurnType) -> Coords {
