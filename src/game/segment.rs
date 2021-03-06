@@ -1,38 +1,42 @@
 use ggez::{graphics::Rect, Context};
 
-use super::{consts, coords::Coords, direction::Direction, maths};
+use super::{consts, coords::Coords, direction::Direction};
 
 /// Trait for growth functionality of the snake segments
 ///
 pub trait Growable {
     fn grow(&mut self, dist: f32) -> f32;
     fn shrink(&mut self, dist: f32) -> f32;
-    fn get_end(&self) -> Coords;
-    fn get_dir(&self) -> Direction;
+    fn end(&self) -> Coords;
+    fn direction(&self) -> Direction;
 }
 
 /// Trait for rendering and collision functionality of the snake segments
 ///
 pub trait Renderable {
     fn draw(&self, ctx: &mut Context);
-    fn get_bbox(&self) -> Rect;
+    fn bounding_box(&self) -> Rect;
 
     fn collision(&self, other: &Rect) -> bool {
-        let rect = self.get_bbox();
-        if rect.left() < other.right()
-            && rect.right() > other.left()
-            && rect.top() < other.bottom()
-            && rect.bottom() > other.top()
-        {
-            let ll = maths::maxf(rect.left(), other.left());
-            let rr = maths::minf(rect.right(), other.right());
-            let tt = maths::maxf(rect.top(), other.top());
-            let bb = maths::minf(rect.bottom(), other.bottom());
+        let rect = self.bounding_box();
 
-            return (rr - ll) * (bb - tt) >= consts::COLLISION_PIXELS_MARGIN;
+        if rect.left() >= other.right()
+            || rect.right() <= other.left()
+            || rect.top() >= other.bottom()
+            || rect.bottom() <= other.top()
+        {
+            return false;
         }
-        false
+
+        let ll = f32::max(rect.left(), other.left());
+        let rr = f32::min(rect.right(), other.right());
+        let tt = f32::max(rect.top(), other.top());
+        let bb = f32::min(rect.bottom(), other.bottom());
+
+        (rr - ll) * (bb - tt) >= consts::COLLISION_PIXELS_MARGIN
     }
 }
 
 pub trait Segment: Growable + Renderable {}
+
+impl<T: Growable + Renderable> Segment for T {}

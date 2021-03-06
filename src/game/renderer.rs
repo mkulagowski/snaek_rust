@@ -1,10 +1,11 @@
 use crate::game::{consts, food::Food, turn::TurnType};
-use crate::game::{coords::Coords, snake::LineSnake};
+use crate::game::{coords::Coords, snake::Snake};
 use ggez::{
     graphics::{self, Color, FillOptions, Mesh, MeshBuilder, Text},
     Context, GameError,
 };
 use graphics::Image;
+use itertools as it;
 
 /// Helper struct for various drawing functions.
 /// It helps to draw each type of object in a proper manner.
@@ -69,8 +70,10 @@ impl Renderer {
 
     /// Draws whole `LineSnake` structure
     ///
-    pub fn draw_snake(ctx: &mut Context, snake: &LineSnake) {
-        snake.body.iter().for_each(|x| x.draw(ctx));
+    pub fn draw_snake(ctx: &mut Context, snake: &Snake) {
+        for segment in &snake.body {
+            segment.draw(ctx);
+        }
     }
 
     /// Draws given text in a white color with a black outline
@@ -116,13 +119,16 @@ impl Renderer {
         let from_angle = from_angle.to_radians();
         let to_angle = to_angle.to_radians();
         let step = step.to_radians();
+
+        let arc_points = it::iterate(from_angle, |v| v + step)
+            .take_while(|&v| v <= to_angle)
+            .map(|v| {
+                let (sin, cos) = v.sin_cos();
+                Coords::new(mid.x + cos * r, mid.y + sin * r)
+            });
+
         let mut points = vec![mid];
-        let mut i = from_angle;
-        while i <= to_angle {
-            let (sini, cosi) = i.sin_cos();
-            points.push(Coords::new(mid.x + cosi * r, mid.y + sini * r));
-            i += step;
-        }
+        points.extend(arc_points);
 
         points
     }
@@ -150,7 +156,7 @@ impl Renderer {
     ///
     pub fn create_qt_ring(
         ctx: &mut Context,
-        pos: &Coords,
+        pos: Coords,
         r1: f32,
         r2: f32,
         turn: TurnType,
@@ -164,7 +170,7 @@ impl Renderer {
             ));
         }
         let (from, to) = turn.get_arc_bounds();
-        let pos = pos.to_owned() + r1 * Self::get_arc_translation(turn);
+        let pos = pos + r1 * Self::get_arc_translation(turn);
 
         let (from, to) = if reversed {
             (to - 90. * progress, to)
@@ -174,49 +180,12 @@ impl Renderer {
 
         let outers = Self::get_arc(pos, r1, from, to, 1.);
         let inners = Self::get_arc(pos, r2, from, to, 1.);
-        let polys: Vec<Coords> = outers.into_iter().chain(inners.into_iter().rev()).collect();
+        let polys = it::chain(outers, it::rev(inners)).collect();
+
         if is_head {
-            let pt1 = polys.first().unwrap();
-            let pt2 = polys.last().unwrap();
-
-            let vect = *pt2 - *pt1;
-            let len = (vect.x.powi(2) + vect.y.powi(2)).sqrt();
-            let norm = { Coords::new(vect.x / len, vect.y / len) };
-            let ppd = Coords::new(norm.y, -norm.x);
-            let eye1 = *pt1 + (vect * 0.25 * len) + (ppd * 0.25 * len);
-            let eye2 = *pt1 + (vect * 0.75 * len) + (ppd * 0.25 * len);
-
-            MeshBuilder::new()
-                .polygon(
-                    graphics::DrawMode::Fill(FillOptions::default()),
-                    &polys,
-                    Color::from_rgb(255, 255, 0),
-                )
-                .unwrap()
-                .circle(
-                    graphics::DrawMode::Fill(FillOptions::default()),
-                    eye1,
-                    10.,
-                    1.,
-                    graphics::BLACK,
-                )
-                .circle(
-                    graphics::DrawMode::Fill(FillOptions::default()),
-                    eye2,
-                    10.,
-                    1.,
-                    graphics::BLACK,
-                )
-                .build(ctx)
+            create_head(polys, ctx)
         } else {
-            MeshBuilder::new()
-                .polygon(
-                    graphics::DrawMode::Fill(FillOptions::default()),
-                    &polys,
-                    Color::from_rgb(255, 255, 0),
-                )
-                .unwrap()
-                .build(ctx)
+            create_body(polys, ctx)
         }
     }
 
@@ -228,4 +197,50 @@ impl Renderer {
             TurnType::UpRight => Coords::new(0.5, 0.5),
         }
     }
+}
+
+fn create_body(polys: Vec<Coords>, ctx: &mut Context) -> Result<Mesh, ggez::GameError> {
+    MeshBuilder::new()
+        .polygon(
+            graphics::DrawMode::Fill(FillOptions::default()),
+            &polys,
+            Color::from_rgb(255, 255, 0),
+        )
+        .unwrap()
+        .build(ctx)
+}
+
+fn create_head(polys: Vec<Coords>, ctx: &mut Context) -> Result<Mesh, ggez::GameError> {
+    let pt1 = polys.first().unwrap();
+    let pt2 = polys.last().unwrap();
+
+    let vect = *pt2 - *pt1;
+    let len = (vect.x.powi(2) + vect.y.powi(2)).sqrt();
+    let norm = Coords::new(vect.x / len, vect.y / len);
+    let ppd = Coords::new(norm.y, -norm.x);
+    let eye1 = *pt1 + (vect * 0.25 * len) + (ppd * 0.25 * len);
+    let eye2 = *pt1 + (vect * 0.75 * len) + (ppd * 0.25 * len);
+
+    MeshBuilder::new()
+        .polygon(
+            graphics::DrawMode::Fill(FillOptions::default()),
+            &polys,
+            Color::from_rgb(255, 255, 0),
+        )
+        .unwrap()
+        .circle(
+            graphics::DrawMode::Fill(FillOptions::default()),
+            eye1,
+            10.,
+            1.,
+            graphics::BLACK,
+        )
+        .circle(
+            graphics::DrawMode::Fill(FillOptions::default()),
+            eye2,
+            10.,
+            1.,
+            graphics::BLACK,
+        )
+        .build(ctx)
 }

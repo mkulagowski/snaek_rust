@@ -4,21 +4,20 @@ use crate::game::coords::Coords;
 ///
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Direction {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
 impl Direction {
-    /// Return inverted direction.
+    /// Check if `self` and `other` are colinear,
+    /// i.e. if they are on the same axis (X/Y)
     ///
-    pub fn inverse(&self) -> Self {
+    pub fn is_colinear(&self, other: Self) -> bool {
         match self {
-            Direction::UP => Direction::DOWN,
-            Direction::DOWN => Direction::UP,
-            Direction::LEFT => Direction::RIGHT,
-            Direction::RIGHT => Direction::LEFT,
+            Self::Up | Self::Down => matches!(other, Self::Up | Self::Down),
+            Self::Left | Self::Right => matches!(other, Self::Left | Self::Right),
         }
     }
 
@@ -26,10 +25,10 @@ impl Direction {
     ///
     pub fn as_coords(&self) -> Coords {
         let (x, y) = match self {
-            Direction::UP => (0., -1.),
-            Direction::DOWN => (0., 1.),
-            Direction::LEFT => (-1., 0.),
-            Direction::RIGHT => (1., 0.),
+            Direction::Up => (0., -1.),
+            Direction::Down => (0., 1.),
+            Direction::Left => (-1., 0.),
+            Direction::Right => (1., 0.),
         };
         Coords { x, y }
     }

@@ -5,10 +5,7 @@ use ggez::{
 
 use crate::game::{consts, coords::Coords, direction::Direction};
 
-use super::{
-    maths,
-    segment::{Growable, Renderable, Segment},
-};
+use super::segment::{Growable, Renderable};
 
 /// Straight segment of a snake
 ///
@@ -18,8 +15,6 @@ pub struct Line {
     pub end: Coords,
     pub dir: Direction,
 }
-
-impl Segment for Line {}
 
 impl Line {
     /// Create a new `Line` that starts on the given `pos`
@@ -37,8 +32,8 @@ impl Line {
     ///
     pub fn size(&self) -> f32 {
         match self.dir {
-            Direction::UP | Direction::DOWN => (self.end.y - self.beg.y).abs(),
-            Direction::LEFT | Direction::RIGHT => (self.end.x - self.beg.x).abs(),
+            Direction::Up | Direction::Down => (self.end.y - self.beg.y).abs(),
+            Direction::Left | Direction::Right => (self.end.x - self.beg.x).abs(),
         }
     }
 }
@@ -46,57 +41,58 @@ impl Line {
 impl Growable for Line {
     fn grow(&mut self, dist: f32) -> f32 {
         match self.dir {
-            Direction::UP => self.end.y -= dist,
-            Direction::DOWN => self.end.y += dist,
-            Direction::LEFT => self.end.x -= dist,
-            Direction::RIGHT => self.end.x += dist,
+            Direction::Up => self.end.y -= dist,
+            Direction::Down => self.end.y += dist,
+            Direction::Left => self.end.x -= dist,
+            Direction::Right => self.end.x += dist,
         };
+
         0.
     }
 
     fn shrink(&mut self, dist: f32) -> f32 {
-        let left = maths::clamp(dist - self.size(), 0., dist);
+        let left = f32::clamp(dist - self.size(), 0., dist);
         match self.dir {
-            Direction::UP => self.beg.y -= dist,
-            Direction::DOWN => self.beg.y += dist,
-            Direction::LEFT => self.beg.x -= dist,
-            Direction::RIGHT => self.beg.x += dist,
+            Direction::Up => self.beg.y -= dist,
+            Direction::Down => self.beg.y += dist,
+            Direction::Left => self.beg.x -= dist,
+            Direction::Right => self.beg.x += dist,
         };
 
-        return left;
+        left
     }
 
-    fn get_end(&self) -> Coords {
+    fn end(&self) -> Coords {
         self.end
     }
 
-    fn get_dir(&self) -> Direction {
+    fn direction(&self) -> Direction {
         self.dir
     }
 }
 
 impl Renderable for Line {
-    fn get_bbox(&self) -> Rect {
+    fn bounding_box(&self) -> Rect {
         let (x, y, w, h) = match self.dir {
-            Direction::UP => (
+            Direction::Up => (
                 self.end.x - consts::SNAKE_HALF_WIDTH,
                 self.end.y,
                 consts::SNAKE_WIDTH,
                 (self.end.y - self.beg.y).abs(),
             ),
-            Direction::DOWN => (
+            Direction::Down => (
                 self.end.x - consts::SNAKE_HALF_WIDTH,
                 self.beg.y,
                 consts::SNAKE_WIDTH,
                 (self.end.y - self.beg.y).abs(),
             ),
-            Direction::LEFT => (
+            Direction::Left => (
                 self.end.x,
                 self.end.y - consts::SNAKE_HALF_WIDTH,
                 (self.end.x - self.beg.x).abs(),
                 consts::SNAKE_WIDTH,
             ),
-            Direction::RIGHT => (
+            Direction::Right => (
                 self.beg.x,
                 self.end.y - consts::SNAKE_HALF_WIDTH,
                 (self.end.x - self.beg.x).abs(),
@@ -111,7 +107,7 @@ impl Renderable for Line {
         let mesh = Mesh::new_rectangle(
             ctx,
             graphics::DrawMode::fill(),
-            self.get_bbox(),
+            self.bounding_box(),
             Color::from_rgb(255, 255, 0),
         )
         .unwrap();

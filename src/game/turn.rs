@@ -9,8 +9,8 @@ use ggez::graphics::{Color, Mesh};
 use crate::game::{coords::Coords, direction::Direction};
 
 use super::{
-    consts, maths,
-    segment::{Growable, Renderable, Segment},
+    consts,
+    segment::{Growable, Renderable},
     Renderer,
 };
 
@@ -24,8 +24,6 @@ pub struct Turn {
     pub in_dir: Direction,
     pub out_dir: Direction,
 }
-
-impl Segment for Turn {}
 
 impl Turn {
     /// Create a new `Turn` that starts on the given `pos` with `in_dir`
@@ -44,53 +42,56 @@ impl Turn {
 
 impl Growable for Turn {
     fn grow(&mut self, dist: f32) -> f32 {
-        if self.is_growing && self.percentage < 1. {
-            let left = maths::clamp(
-                dist - (1. - self.percentage) * consts::SNAKE_WIDTH,
-                0.,
-                dist,
-            );
-            self.percentage = maths::clamp(self.percentage + dist / consts::SNAKE_WIDTH, 0., 1.);
-            self.is_growing = self.percentage < 1.;
-            return left;
+        if !self.is_growing || self.percentage >= 1. {
+            return dist;
         }
-        dist
+
+        let left = f32::clamp(
+            dist - (1. - self.percentage) * consts::SNAKE_WIDTH,
+            0.,
+            dist,
+        );
+        self.percentage = f32::clamp(self.percentage + dist / consts::SNAKE_WIDTH, 0., 1.);
+        self.is_growing = self.percentage < 1.;
+
+        left
     }
 
     fn shrink(&mut self, dist: f32) -> f32 {
-        if self.percentage > 0. {
-            let left = maths::clamp(dist - self.percentage * consts::SNAKE_WIDTH, 0., dist);
-            self.percentage = maths::clamp(self.percentage - dist / consts::SNAKE_WIDTH, 0., 1.);
-            return left;
+        if self.percentage <= 0. {
+            return dist;
         }
 
-        dist
+        let left = f32::clamp(dist - self.percentage * consts::SNAKE_WIDTH, 0., dist);
+        self.percentage = f32::clamp(self.percentage - dist / consts::SNAKE_WIDTH, 0., 1.);
+
+        left
     }
 
-    fn get_end(&self) -> Coords {
+    fn end(&self) -> Coords {
         self.pos
             + self.in_dir.as_coords() * consts::SNAKE_HALF_WIDTH
             + self.out_dir.as_coords() * consts::SNAKE_HALF_WIDTH
     }
 
-    fn get_dir(&self) -> Direction {
+    fn direction(&self) -> Direction {
         self.out_dir
     }
 }
 
 impl Renderable for Turn {
-    fn get_bbox(&self) -> Rect {
+    fn bounding_box(&self) -> Rect {
         let (x, y) = match self.in_dir {
-            Direction::UP => (
+            Direction::Up => (
                 self.pos.x - consts::SNAKE_HALF_WIDTH,
                 self.pos.y - (consts::SNAKE_WIDTH),
             ),
-            Direction::DOWN => (self.pos.x - consts::SNAKE_HALF_WIDTH, self.pos.y),
-            Direction::LEFT => (
+            Direction::Down => (self.pos.x - consts::SNAKE_HALF_WIDTH, self.pos.y),
+            Direction::Left => (
                 self.pos.x - (consts::SNAKE_WIDTH),
                 self.pos.y - consts::SNAKE_HALF_WIDTH,
             ),
-            Direction::RIGHT => (self.pos.x, self.pos.y - consts::SNAKE_HALF_WIDTH),
+            Direction::Right => (self.pos.x, self.pos.y - consts::SNAKE_HALF_WIDTH),
         };
 
         Rect::new(x, y, consts::SNAKE_WIDTH, consts::SNAKE_WIDTH)
@@ -99,10 +100,10 @@ impl Renderable for Turn {
     fn draw(&self, ctx: &mut Context) {
         let turn_type = TurnType::from_dirs(&self.in_dir, &self.out_dir);
         let (margin, is_reversed) = match turn_type {
-            TurnType::DownRight => (Coords { x: 1., y: -1. }, self.out_dir == Direction::UP),
-            TurnType::DownLeft => (Coords { x: -1., y: -1. }, self.out_dir == Direction::LEFT),
-            TurnType::UpLeft => (Coords { x: -1., y: 1. }, self.out_dir == Direction::DOWN),
-            TurnType::UpRight => (Coords { x: 1., y: 1. }, self.out_dir == Direction::RIGHT),
+            TurnType::DownRight => (Coords { x: 1., y: -1. }, self.out_dir == Direction::Up),
+            TurnType::DownLeft => (Coords { x: -1., y: -1. }, self.out_dir == Direction::Left),
+            TurnType::UpLeft => (Coords { x: -1., y: 1. }, self.out_dir == Direction::Down),
+            TurnType::UpRight => (Coords { x: 1., y: 1. }, self.out_dir == Direction::Right),
         };
 
         let pos = self.pos
@@ -110,7 +111,7 @@ impl Renderable for Turn {
             + margin * consts::HALF_TURN_MARGIN;
         if let Ok(mesh) = Renderer::create_qt_ring(
             ctx,
-            &pos,
+            pos,
             consts::SNAKE_WIDTH + consts::TURN_MARGIN,
             consts::TURN_MARGIN,
             turn_type,
@@ -151,20 +152,20 @@ impl TurnType {
     /// Create `TurnType` based on the Turn directions
     ///
     pub fn from_dirs(in_dir: &Direction, out_dir: &Direction) -> Self {
-        if (in_dir == &Direction::LEFT && out_dir == &Direction::UP)
-            || (in_dir == &Direction::DOWN && out_dir == &Direction::RIGHT)
+        if (in_dir == &Direction::Left && out_dir == &Direction::Up)
+            || (in_dir == &Direction::Down && out_dir == &Direction::Right)
         {
             TurnType::DownRight
-        } else if (in_dir == &Direction::DOWN && out_dir == &Direction::LEFT)
-            || (in_dir == &Direction::RIGHT && out_dir == &Direction::UP)
+        } else if (in_dir == &Direction::Down && out_dir == &Direction::Left)
+            || (in_dir == &Direction::Right && out_dir == &Direction::Up)
         {
             TurnType::DownLeft
-        } else if (in_dir == &Direction::RIGHT && out_dir == &Direction::DOWN)
-            || (in_dir == &Direction::UP && out_dir == &Direction::LEFT)
+        } else if (in_dir == &Direction::Right && out_dir == &Direction::Down)
+            || (in_dir == &Direction::Up && out_dir == &Direction::Left)
         {
             TurnType::UpLeft
-        } else if (in_dir == &Direction::UP && out_dir == &Direction::RIGHT)
-            || (in_dir == &Direction::LEFT && out_dir == &Direction::DOWN)
+        } else if (in_dir == &Direction::Up && out_dir == &Direction::Right)
+            || (in_dir == &Direction::Left && out_dir == &Direction::Down)
         {
             TurnType::UpRight
         } else {

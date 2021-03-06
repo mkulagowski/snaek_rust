@@ -1,6 +1,6 @@
 use crate::game::{consts, coords::Coords, direction::Direction, line::Line, turn::Turn};
 use ggez::graphics::Rect;
-use std::collections::LinkedList;
+use std::collections::VecDeque;
 
 use super::segment::Segment;
 
@@ -8,7 +8,7 @@ use super::segment::Segment;
 /// straight or curved segments and the direction of the head.
 ///
 pub struct Snake {
-    pub body: LinkedList<Box<dyn Segment>>,
+    pub body: VecDeque<Box<dyn Segment>>,
     pub dir: Direction,
 }
 
@@ -17,16 +17,18 @@ impl Snake {
     /// on the `(x, y)` position, pointing down.
     ///
     pub fn new(x: f32, y: f32) -> Self {
-        let mut body: LinkedList<Box<dyn Segment>> = LinkedList::new();
-        body.push_back(Box::new(Line {
+        let first = Line {
             beg: Coords::new(x, y - consts::SNAKE_START_HEIGHT / 2.),
             end: Coords::new(x, y + consts::SNAKE_START_HEIGHT / 2.),
-            dir: Direction::DOWN,
-        }));
+            dir: Direction::Down,
+        };
+        let boxed: Box<dyn Segment> = Box::new(first);
+        let mut body = VecDeque::new();
+        body.push_back(boxed);
 
         Self {
             body,
-            dir: Direction::DOWN,
+            dir: Direction::Down,
         }
     }
 
@@ -53,9 +55,9 @@ impl Snake {
     pub fn grow(&mut self, dist: f32) {
         let mut front = self.body.front_mut().unwrap();
 
-        if front.get_dir() != self.dir {
-            let pos = front.get_end();
-            let in_dir = front.get_dir();
+        if front.direction() != self.dir {
+            let pos = front.end();
+            let in_dir = front.direction();
             self.body
                 .push_front(Box::new(Turn::new(pos, in_dir, self.dir)));
             front = self.body.front_mut().unwrap();
@@ -63,8 +65,8 @@ impl Snake {
 
         let growth_left = front.grow(dist);
         if growth_left > 0. {
-            let pos = front.get_end();
-            let dir = front.get_dir();
+            let pos = front.end();
+            let dir = front.direction();
             self.body.push_front(Box::new(Line::new(pos, dir)));
             self.body.front_mut().unwrap().grow(growth_left);
         }
@@ -79,7 +81,7 @@ impl Snake {
     /// Check if head is colliding with screen boundaries.
     ///
     pub fn wall_collide(&self) -> bool {
-        let head = self.body.front().unwrap().get_bbox();
+        let head = self.body.front().unwrap().bounding_box();
         head.left() < -consts::WALL_MARGIN
             || head.top() < -consts::WALL_MARGIN
             || head.bottom() > consts::SCREEN_SIZE.y + consts::WALL_MARGIN
@@ -93,7 +95,7 @@ impl Snake {
         self.body
             .iter()
             .skip(1)
-            .map(|x| x.get_bbox())
+            .map(|x| x.bounding_box())
             .any(|x| head.collision(&x))
     }
 }
