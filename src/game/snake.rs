@@ -20,7 +20,7 @@ impl Snake {
         let first = Line {
             beg: Coords::new(x, y - consts::SNAKE_START_HEIGHT / 2.),
             end: Coords::new(x, y + consts::SNAKE_START_HEIGHT / 2.),
-            dir: Direction::DOWN,
+            dir: Direction::Down,
         };
         let boxed: Box<dyn Segment> = Box::new(first);
         let mut body = VecDeque::new();
@@ -28,7 +28,7 @@ impl Snake {
 
         Self {
             body,
-            dir: Direction::DOWN,
+            dir: Direction::Down,
         }
     }
 

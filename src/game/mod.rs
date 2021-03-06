@@ -66,10 +66,10 @@ impl EventHandler for GameData {
 
     fn key_down_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _km: KeyMods, _rpt: bool) {
         if let Some(dir) = match keycode {
-            KeyCode::W => Some(Direction::UP),
-            KeyCode::S => Some(Direction::DOWN),
-            KeyCode::A => Some(Direction::LEFT),
-            KeyCode::D => Some(Direction::RIGHT),
+            KeyCode::W => Some(Direction::Up),
+            KeyCode::S => Some(Direction::Down),
+            KeyCode::A => Some(Direction::Left),
+            KeyCode::D => Some(Direction::Right),
             _ => None,
         } {
             if self.inputs.is_empty() || self.inputs.back().unwrap() != &dir {
